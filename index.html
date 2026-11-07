@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0B2F4A">
+<meta name="description" content="Costera App - Comida a domicilio en la costa de San Andrés Tuxtla">
+<title>Costera App | Sabor de la Costa</title>
+
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icono-192.png">
+<link rel="apple-touch-icon" href="icono-512.png">
+
+<!-- Leaflet CSS y JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<style>
+:root {
+--azul-marino: #0B2F4A;
+--amarillo: #FFC93C;
+--turquesa: #1FD1BD;
+--arena-suave: #FBF8F2;
+--arena-borde: #E6DFCE;
+--blanco: #FFFFFF;
+--texto-oscuro: #071C2C;
+--rojo-alerta: #D9383A;
+--gris-claro: #8C9BA5;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+body { background-color: var(--arena-suave); color: var(--texto-oscuro); overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+
+/* Encabezado */
+header {
+background-color: var(--azul-marino);
+color: var(--blanco);
+padding: 12px 18px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+position: sticky;
+top: 0;
+z-index: 1100;
+box-shadow: 0 3px 8px rgba(11, 47, 74, 0.25);
+}
+.brand-logo { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.25rem; letter-spacing: -0.5px; }
+.brand-logo svg { width: 32px; height: 32px; fill: var(--amarillo); }
+
+/* Selector de Rol */
+.role-bar {
+background: #082235;
+padding: 6px 12px;
+display: flex;
+gap: 6px;
+overflow-x: auto;
+white-space: nowrap;
+}
+.role-pill {
+background: rgba(255, 255, 255, 0.12);
+color: var(--blanco);
+border: 1px solid rgba(255, 255, 255, 0.2);
+border-radius: 16px;
+padding: 4px 12px;
+font-size: 0.78rem;
+cursor: pointer;
+}
+.role-pill.active { background: var(--turquesa); color: var(--azul-marino); font-weight: 700; border-color: var(--turquesa); }
+
+/* Contenedor principal */
+main { padding-bottom: 90px; }
+.screen { display: none; }
+.screen.active { display: block; animation: fadeIn 0.2s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Botones primarios */
+.btn-primary {
+background-color: var(--amarillo);
+color: var(--azul-marino);
+border: none;
+font-weight: 800;
+font-size: 0.95rem;
+padding: 14px 20px;
+border-radius: 12px;
+cursor: pointer;
+display: inline-flex;
+align-items: center;
+justify-content: center;
+gap: 8px;
+width: 100%;
+text-transform: uppercase;
+letter-spacing: 0.5px;
+box-shadow: 0 4px 10px rgba(255, 201, 60, 0.35);
+transition: transform 0.1s, background-color 0.1s;
+}
+.btn-primary:active { transform: scale(0.98); background-color: #f0bd35; }
+
+.btn-secondary {
+background: var(--blanco);
+color: var(--azul-marino);
+border: 1.5px solid var(--azul-marino);
+font-weight: 700;
+padding: 12px 18px;
+border-radius: 12px;
+cursor: pointer;
+width: 100%;
+}
+.btn-turquesa {
+background: var(--turquesa);
+color: var(--azul-marino);
+font-weight: 700;
+border: none;
+padding: 10px 16px;
+border-radius: 10px;
+cursor: pointer;
+}
+
+/* Banners & Cards */
+.banner-code {
+background: #E5F8F6;
+border-left: 5px solid var(--turquesa);
+padding: 14px 16px;
+margin: 14px;
+border-radius: 8px;
+font-size: 0.88rem;
+color: var(--azul-marino);
+font-weight: 500;
+line-height: 1.35;
+}
+
+.card-grid { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 14px; }
+@media(min-width: 600px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.biz-card {
+background: var(--blanco);
+border-radius: 14px;
+overflow: hidden;
+border: 1px solid var(--arena-borde);
+box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+display: flex;
+flex-direction: column;
+}
+.biz-card img { width: 100%; height: 140px; object-fit: cover; background: #e0e0e0; }
+.biz-card-content { padding: 14px; display: flex; flex-direction: column; flex-grow: 1; }
+.biz-title { font-size: 1.1rem; font-weight: 800; color: var(--azul-marino); margin-bottom: 4px; }
+.biz-tag { font-size: 0.75rem; color: var(--turquesa); font-weight: 700; text-transform: uppercase; background: #E9FBF9; padding: 3px 8px; border-radius: 6px; align-self: flex-start; margin-bottom: 8px; }
+
+/* Contenedor del Mapa 60% viewport */
+.map-wrapper {
+position: relative;
+width: 100%;
+height: 60vh;
+min-height: 360px;
+background: #dadada;
+}
+#map { width: 100%; height: 100%; z-index: 10; }
+
+.map-center-pin {
+position: absolute;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -100%);
+z-index: 900;
+pointer-events: none;
+filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
+}
+.map-controls {
+position: absolute;
+top: 14px;
+right: 14px;
+z-index: 950;
+display: flex;
+flex-direction: column;
+gap: 8px;
+}
+.map-btn {
+background: var(--blanco);
+color: var(--azul-marino);
+border: 1px solid var(--arena-borde);
+border-radius: 8px;
+padding: 8px 12px;
+font-size: 0.8rem;
+font-weight: 700;
+box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+cursor: pointer;
+}
+
+/* Modal / Form Sheets */
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-size: 0.84rem; font-weight: 700; color: var(--azul-marino); margin-bottom: 5px; }
+.form-control {
+width: 100%;
+padding: 12px;
+border: 1.5px solid var(--arena-borde);
+border-radius: 10px;
+font-size: 0.95rem;
+background: var(--blanco);
+}
+.form-control:focus { outline: none; border-color: var(--turquesa); }
+
+/* Botón flotante WhatsApp */
+.whatsapp-float {
+position: fixed;
+bottom: 22px;
+right: 20px;
+background-color: #25D366;
+color: white;
+width: 54px;
+height: 54px;
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+z-index: 1200;
+text-decoration: none;
+}
+
+/* Secciones de Información */
+.info-section { padding: 18px 14px; background: var(--blanco); margin: 14px; border-radius: 14px; border: 1px solid var(--arena-borde); }
+.step-box { display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-start; }
+.step-number { background: var(--azul-marino); color: var(--amarillo); border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem; flex-shrink: 0; }
+
+/* Estados y Badges */
+.badge { padding: 4px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; display: inline-block; }
+.badge-info { background: #E2F3FF; color: #026AA7; }
+.badge-success { background: #E6FBF2; color: #0D824D; }
+.badge-warning { background: #FFF7DF; color: #9E7100; }
+.badge-danger { background: #FFEAEA; color: var(--rojo-alerta); }
+
+/* Fotografía y Cámara */
+.camera-box {
+width: 100%;
+height: 240px;
+background: #000;
+border-radius: 12px;
+position: relative;
+overflow: hidden;
+margin-bottom: 12px;
+}
+.camera-box video { width: 100%; height: 100%; object-fit: cover; }
+
+/* Footer */
+footer {
+background: var(--azul-marino);
+color: #9ab4c7;
+padding: 24px 16px;
+text-align: center;
+font-size: 0.8rem;
+margin-top: 30px;
+}
+footer a { color: var(--turquesa); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<!-- Encabezado Principal -->
+<header>
+<div class="brand-logo">
+<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
+<span>Costera App</span>
+</div>
+<div style="display: flex; gap: 8px;">
+<button class="btn-turquesa" id="btnAudioUnlock" style="font-size: 0.72rem; padding: 6px 10px;">🔊 Activar Sonido</button>
+<span id="networkStatus" class="badge badge-success" style="padding: 6px 8px;">Online</span>
+</div>
+</header>
+
+<!-- Simulador de Rol (Para Pruebas y Operación Multiusuario) -->
+<nav class="role-bar">
+<button class="role-pill active" onclick="switchRole('cliente')">👤 Vista Cliente</button>
+<button class="role-pill" onclick="switchRole('repartidor')">🛵 Repartidor</button>
+<button class="role-pill" onclick="switchRole('negocio')">🍲 Panel Negocio</button>
+<button class="role-pill" onclick="switchRole('admin')">🛡️ Administrador</button>
+</nav>
+
+<!-- PANTALLA CLIENTE / LANDING PAGE -->
+<main id="screenCliente" class="screen active">
+<!-- Banner de Código de Entrega -->
+<div class="banner-code">
+<strong>Tu seguridad es primero:</strong> Tu repartidor te da un código. Ingrésalo en la app y tu pedido queda confirmado.
+</div>
+
+<!-- Negocios de la Costa (Sin Registro Requerido) -->
+<div style="padding: 0 14px;">
+<h2 style="font-size: 1.25rem; color: var(--azul-marino); margin-bottom: 4px;">Negocios de la costa</h2>
+<p style="font-size: 0.85rem; color: var(--gris-claro);">Pide mariscos frescos, antojitos y víveres con entrega local.</p>
+</div>
+
+<div class="card-grid" id="negociosContainer">
+<!-- Se inyecta con JavaScript -->
+</div>
+
+<!-- Sección Cómo Funciona -->
+<section class="info-section">
+<h3 style="color: var(--azul-marino); margin-bottom: 14px;">¿Cómo funciona Costera App?</h3>
+
+<div style="margin-bottom: 14px;">
+<h4 style="font-size: 0.9rem; color: var(--turquesa); text-transform: uppercase;">Para el Cliente</h4>
+<div class="step-box"><span class="step-number">1</span><p style="font-size: 0.85rem;">Elige tus platillos favoritos sin registrarte antes.</p></div>
+<div class="step-box"><span class="step-number">2</span><p style="font-size: 0.85rem;">Fija tu ubicación con satélite o referencias locales.</p></div>
+<div class="step-box"><span class="step-number">3</span><p style="font-size: 0.85rem;">Paga en efectivo al repartidor y dale tu código de entrega.</p></div>
+</div>
+
+<div style="border-top: 1px dashed var(--arena-borde); padding-top: 10px;">
+<p style="font-size: 0.85rem; color: var(--azul-marino);">
+<strong>Zonas de cobertura:</strong> Monte Pío, Balzapote, Playa Hermosa, Roca Partida y Salinas Roca.<br>
+<strong>Horario de servicio:</strong> 8:00 AM a 10:00 PM todos los días.<br>
+<strong>Tarifa transparente:</strong> $15 base + $6 por km (Mínimo $`30).
+</p>
+</div>
+</section>
+
+<!-- Modal de Checkout / Dirección con Mapa Leaflet -->
+<div id="checkoutModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1300; overflow-y: auto;">
+<div style="background: var(--arena-suave); min-height: 100%; padding-bottom: 40px;">
+<header style="position: sticky; top: 0;">
+<h3 style="font-size: 1rem;">Confirmar Ubicación y Pedido</h3>
+<button onclick="cerrarCheckout()" style="background:none; border:none; color:white; font-size:1.5rem;">✕</button>
+</header>
+
+<!-- Contenedor del Mapa 60% -->
+<div class="map-wrapper">
+<div id="map"></div>
+<!-- Pin estático en el centro mientras se mueve el mapa -->
+<div class="map-center-pin">
+<svg width="40" height="40" viewBox="0 0 24 24" fill="#D9383A">
+<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+</svg>
+</div>
+<div class="map-controls">
+<button class="map-btn" onclick="toggleMapLayer()" id="btnLayerToggle">🛰️ Ver Satélite</button>
+<button class="map-btn" onclick="locateUser()">📍 Mi Ubicación</button>
+</div>
+</div>
+
+<div style="padding: 16px;">
+<div style="background: #FFF9E6; border: 1px solid #FFE494; padding: 10px; border-radius: 8px; margin-bottom: 14px; font-size: 0.88rem; font-weight: 700; color: #8A6400;">
+¿Es aquí tu casa? Mueve el mapa hasta centrar el pin en tu puerta.
+</div>
+
+<div class="form-group">
+<label>Pegar link de WhatsApp o Google Maps (Opcional):</label>
+<input type="text" id="inputMapLink" class="form-control" placeholder="https://maps.app.goo.gl/... o ubicación compartida" onchange="parseLocationLink(this.value)">
+</div>
+
+<div class="form-group">
+<label>Referencias de tu casa (Obligatorio en la costa): *</label>
+<textarea id="inputReferencias" class="form-control" rows="2" placeholder="Ej: Portón verde, junto a la palapa de Doña Mari, frente a la ceiba."></textarea>
+</div>
+
+<div class="form-group">
+<label>Foto de fachada (Opcional para el repartidor):</label>
+<input type="file" id="inputFotoFachada" accept="image/*" class="form-control" onchange="handleImageUpload(event, 'previewFachada')">
+<img id="previewFachada" style="display:none; width: 100%; height: 120px; object-fit: cover; margin-top: 8px; border-radius: 8px;">
+</div>
+
+<div class="form-group">
+<label>Tu Teléfono (Visible para el repartidor): *</label>
+<input type="tel" id="inputTelefonoCliente" class="form-control" placeholder="294 123 4567">
+</div>
+
+<!-- Resumen de Costos -->
+<div style="background: var(--blanco); border-radius: 12px; padding: 14px; border: 1px solid var(--arena-borde); margin-bottom: 16px;">
+<div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+<span>Comida / Productos:</span>
+<span id="costoComida">$180.00&lt;/span&gt; &lt;/div&gt; &lt;div style="display: flex; justify-content: space-between; margin-bottom: 6px;"&gt; &lt;span&gt;Tarifa de Envío (&lt;span id="distanciaKm"&gt;2.5&lt;/span&gt; km):&lt;/span&gt; &lt;span id="costoEnvio"&gt;$30.00</span>
+</div>
+<div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 1.1rem; color: var(--azul-marino); border-top: 1px solid var(--arena-borde); padding-top: 6px;">
+<span>Total a pagar en efectivo:</span>
+<span id="costoTotal">`$210.00</span>
+</div>
+</div>
+
+<!-- Transferencia Obligatoria si aplica -->
+<div id="transferenciaCard" style="display: none; background: #FFF4E5; border: 1.5px solid #FFB020; border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+<h4 style="color: #8A4B00; font-size: 0.95rem;">⚠️ Pago por Transferencia Requerido</h4>
+<p style="font-size: 0.8rem; margin: 6px 0;">Para nuevos usuarios o cuentas sin selfie validada, es necesario pagar por anticipado.</p>
+<p style="font-size: 0.85rem; font-family: monospace;"><strong>Banco:</strong> STP / BBVA<br><strong>CLABE:</strong> 6461 8012 3456 7890 12<br><strong>Referencia:</strong> COST-894</p>
+<div class="form-group" style="margin-top: 10px;">
+<label>Subir comprobante (Expira en <span id="timerTransfer">15:00</span>):</label>
+<input type="file" id="voucherFile" class="form-control">
+</div>
+</div>
+
+<button class="btn-primary" onclick="realizarPedido()">Confirmar Pedido</button>
+</div>
+</div>
+</div>
+
+<!-- Modal de Estado del Pedido Activo / Ingreso de Código -->
+<div id="modalTracking" style="display: none; padding: 16px;">
+<div style="background: var(--blanco); border-radius: 14px; padding: 16px; border: 1.5px solid var(--turquesa);">
+<span class="badge badge-warning" id="lblEstadoPedido">En Preparación</span>
+<h3 style="color: var(--azul-marino); margin-top: 6px;">Pedido #C-104 en curso</h3>
+<p style="font-size: 0.85rem; margin-bottom: 12px;">Repartidor asignado: <strong>Carlos M. (Moto 150)</strong></p>
+
+<div style="background: #F1F9FF; border: 1px solid #BAE3FF; border-radius: 10px; padding: 12px; margin-bottom: 14px;">
+<label style="font-size: 0.85rem; font-weight: 700; color: var(--azul-marino);">Código de confirmación recibido:</label>
+<p style="font-size: 0.75rem; color: #555; margin-bottom: 6px;">El repartidor te dirá un número de 4 dígitos al darte la comida:</p>
+<div style="display: flex; gap: 8px;">
+<input type="number" id="inputClientCode" class="form-control" placeholder="Ej: 8492" style="font-size: 1.2rem; text-align: center; letter-spacing: 4px;">
+<button class="btn-turquesa" onclick="validarCodigoEntrega()">Validar</button>
+</div>
+<span style="font-size: 0.72rem; color: #888; display: block; margin-top: 6px;">Se confirmará automáticamente en <span id="autoConfirmTimer">20:00</span> si no hay reporte.</span>
+</div>
+
+<button class="btn-secondary" style="border-color: var(--rojo-alerta); color: var(--rojo-alerta);" onclick="reportarIncidente('cliente')">⚠️ Tuve un problema con el pedido</button>
+</div>
+</div>
+</main>
+
+<!-- PANTALLA REPARTIDOR -->
+<main id="screenRepartidor" class="screen">
+<div style="padding: 14px;">
+<!-- Panel de Saldo Prepagado -->
+<div style="background: var(--azul-marino); color: white; border-radius: 14px; padding: 16px; margin-bottom: 14px;">
+<span style="font-size: 0.8rem; opacity: 0.8;">Tu Cartera Prepago</span>
+<h2 style="font-size: 2rem; color: var(--amarillo); margin: 4px 0;" id="saldoRepartidor">$120.00 MXN</h2>
+<p style="font-size: 0.75rem; opacity: 0.9;">Comisión por pedido: 20% sobre el envío. Con saldo $0 se bloquean las órdenes.</p>
+<button class="btn-turquesa" style="margin-top: 10px; width: 100%;" onclick="recargarSaldo()">+ Recargar Saldo</button>
+</div>
+
+<!-- Registro / Estado de Validación -->
+<div class="info-section" style="margin: 0 0 14px 0;">
+<h3 style="color: var(--azul-marino);">Registro y Vehículo</h3>
+<p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">Selecciona tu vehículo para fijar tu radio operativo:</p>
+
+<div class="form-group">
+<label>Tipo de Vehículo:</label>
+<select id="driverVehicle" class="form-control" onchange="updateVehicleRestrictions()">
+<option value="moto">Motocicleta (Radio hasta 14 km)</option>
+<option value="bici">Bici Eléctrica (Radio hasta 5 km)</option>
+</select>
+</div>
+
+<div id="biciDetails" style="display: none;" class="form-group">
+<label>Autonomía de Batería declarada (km):</label>
+<input type="number" class="form-control" placeholder="Ej: 35">
+</div>
+
+<button class="btn-secondary" onclick="abrirCamaraSelfie()">📸 Tomar Selfie de Identidad (Cámara Frontal)</button>
+<div id="selfieBadge" style="margin-top: 8px;">
+<span class="badge badge-warning">Selfie pendiente de validación</span>
+</div>
+</div>
+
+<!-- Pedidos Disponibles para Entrega -->
+<h3 style="color: var(--azul-marino); margin-bottom: 10px;">Pedidos Asignados</h3>
+<div style="background: var(--blanco); border-radius: 12px; padding: 14px; border: 1px solid var(--arena-borde);">
+<div style="display: flex; justify-content: space-between;">
+<strong>Pedido #C-104</strong>
+<span class="badge badge-info">Listo para entrega</span>
+</div>
+<p style="font-size: 0.85rem; margin: 8px 0;"><strong>Destino:</strong> Casa verde junto a la tienda de Doña Lupe, Monte Pío.</p>
+
+<!-- Código que el repartidor debe mostrarle al cliente -->
+<div style="background: #FFF9E6; border: 1.5px dashed var(--amarillo); padding: 12px; border-radius: 8px; text-align: center; margin: 10px 0;">
+<span style="font-size: 0.8rem; color: #735100; font-weight: 700;">Dile este código al cliente al entregarle:</span>
+<h1 style="color: var(--azul-marino); font-size: 2.2rem; letter-spacing: 6px;" id="codigoParaCliente">8492</h1>
+</div>
+
+<div style="display: flex; gap: 8px;">
+<button class="btn-secondary" style="border-color: var(--rojo-alerta); color: var(--rojo-alerta);" onclick="reportarNoRecibido()">Cliente no recibió</button>
+<button class="btn-secondary" style="background:#FFEAEA; color:var(--rojo-alerta); border:none;" onclick="botonEmergencia()">🚨 911 / Auxilio</button>
+</div>
+</div>
+</div>
+</main>
+
+<!-- PANTALLA NEGOCIO -->
+<main id="screenNegocio" class="screen">
+<div style="padding: 14px;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+<h2 style="color: var(--azul-marino);">Panel Cocina</h2>
+<button class="btn-turquesa" onclick="solicitarWakeLock()">💡 Pantalla Activa (ON)</button>
+</div>
+
+<!-- Punto Costera Wi-Fi -->
+<div style="background: #E5F8F6; border: 1px solid var(--turquesa); border-radius: 10px; padding: 12px; margin-bottom: 14px;">
+<strong>🌐 Punto Costera Wi-Fi:</strong>
+<p style="font-size: 0.8rem; color: #08483F;">Tu negocio ofrece conexión a los repartidores en zonas sin señal para sincronizar pedidos.</p>
+</div>
+
+<!-- Agregar / Editar Menú -->
+<div class="info-section" style="margin: 0 0 14px 0;">
+<h3 style="color: var(--azul-marino); margin-bottom: 8px;">Subir Producto al Menú</h3>
+<div class="form-group">
+<label>Nombre del Platillo / Producto:</label>
+<input type="text" id="prodNombre" class="form-control" placeholder="Ej: Cóctel de Camarón Grande">
+</div>
+<div class="form-group">
+<label>Precio en Efectivo ($` MXN):</label>
+<input type="number" id="prodPrecio" class="form-control" placeholder="150">
+</div>
+<div class="form-group">
+<label>Fotografía (Redimensionado automático a <1200px / <300KB):</label>
+<input type="file" id="prodFoto" accept="image/*" class="form-control" onchange="handleProductImage(event)">
+<div id="fotoStatus" style="font-size: 0.75rem; color: var(--turquesa); margin-top: 4px;"></div>
+</div>
+<div style="margin-bottom: 12px;">
+<label style="font-size: 0.8rem; display: flex; align-items: center; gap: 8px;">
+<input type="checkbox" id="chkDerechos"> Confirmo que las fotos son mías o tengo permiso de usarlas.
+</label>
+</div>
+<button class="btn-primary" onclick="guardarProducto()">Guardar Producto</button>
+</div>
+</div>
+</main>
+
+<!-- PANTALLA ADMINISTRADOR -->
+<main id="screenAdmin" class="screen">
+<div style="padding: 14px;">
+<h2 style="color: var(--azul-marino); margin-bottom: 14px;">Panel de Control General</h2>
+
+<!-- Configuración de Tarifas -->
+<div class="info-section" style="margin: 0 0 14px 0;">
+<h3 style="color: var(--azul-marino); margin-bottom: 8px;">Configuración de Tarifas</h3>
+<div class="form-group">
+<label>Tarifa Base ($):&lt;/label&gt; &lt;input type="number" id="cfgBase" class="form-control" value="15"&gt; &lt;/div&gt; &lt;div class="form-group"&gt; &lt;label&gt;Precio por Km ($):</label>
+<input type="number" id="cfgKm" class="form-control" value="6">
+</div>
+<div class="form-group">
+<label>Tarifa Mínima (`$):</label>
+<input type="number" id="cfgMin" class="form-control" value="30">
+</div>
+<div class="form-group">
+<label>Comisión de la App (% sobre envío):</label>
+<input type="number" id="cfgComision" class="form-control" value="20">
+</div>
+<button class="btn-primary" onclick="alert('Configuración guardada en la base de datos.')">Actualizar Parámetros</button>
+</div>
+
+<!-- Validación de Identidad (Selfies / Documentos) -->
+<div class="info-section" style="margin: 0 0 14px 0;">
+<h3 style="color: var(--azul-marino);">Aprobación de Cuentas Nuevas</h3>
+<p style="font-size: 0.8rem; color: #666;">Valida las selfies tomadas exclusivamente con la cámara delantera.</p>
+<div style="border: 1px solid var(--arena-borde); padding: 10px; border-radius: 8px; margin-top: 8px;">
+<p style="font-size: 0.85rem;"><strong>Repartidor:</strong> Ramón Torres (Moto)</p>
+<p style="font-size: 0.75rem; color: var(--turquesa);">Selfie facial tomada con cámara en vivo</p>
+<div style="display: flex; gap: 8px; margin-top: 8px;">
+<button class="btn-turquesa" onclick="alert('Cuenta aprobada')">Aprobar</button>
+<button class="btn-secondary" style="border-color: var(--rojo-alerta); color: var(--rojo-alerta);" onclick="alert('Rechazada')">Rechazar</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+
+<!-- MODAL DE CAPTURA DE SELFIE FACIAL FRONTAL -->
+<div id="selfieModal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; padding: 20px; flex-direction: column; align-items: center; justify-content: center;">
+<div style="background: white; width: 100%; max-width: 400px; border-radius: 16px; padding: 18px; text-align: center;">
+<h3 style="color: var(--azul-marino);">Verificación Facial en Vivo</h3>
+<p style="font-size: 0.8rem; color: #666; margin: 8px 0 14px 0;">Tu foto solo la ve el administrador y se usa para verificar que eres una persona real.</p>
+
+<div class="camera-box">
+<video id="selfieVideo" autoplay playsinline></video>
+</div>
+<canvas id="selfieCanvas" style="display:none;"></canvas>
+
+<button class="btn-primary" onclick="capturarFotoSelfie()">Capturar Selfie</button>
+<button class="btn-secondary" style="margin-top: 8px;" onclick="cerrarCamaraSelfie()">Cancelar</button>
+</div>
+</div>
+
+<!-- Botón Flotante de Soporte WhatsApp -->
+<a href="https://wa.me/522941000000?text=Hola,%20necesito%20ayuda%20con%20Costera%20App" class="whatsapp-float" target="_blank" rel="noopener" aria-label="Contacto WhatsApp">
+<svg width="30" height="30" viewBox="0 0 24 24" fill="white"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-5.46-4.45-9.92-9.91-9.92zm5.78 14.04c-.24.68-1.39 1.3-1.92 1.38-.51.08-1.18.11-3.8-1-2.22-.94-3.66-3.21-3.77-3.36-.11-.15-.9-1.2-0.9-2.29 0-1.09.57-1.63.77-1.85.2-.22.44-.28.59-.28.15 0 .3 0 .43.01.14.01.32-.05.5.39.18.44.62 1.52.68 1.63.06.11.1.24.02.39-.08.15-.12.24-.24.37-.12.13-.25.29-.36.39-.12.11-.25.24-.11.47.14.24.63 1.04 1.35 1.68.93.83 1.71 1.09 1.95 1.21.24.12.38.1.52-.06.14-.17.61-.71.77-.96.16-.24.33-.2.55-.12.22.08 1.41.67 1.65.79.24.12.4.18.46.28.06.1.06.59-.18 1.27z"/></svg>
+</a>
+
+<!-- Footer -->
+<footer>
+<p><strong>Costera App</strong> • San Andrés Tuxtla, Veracruz</p>
+<p style="margin: 6px 0;">Plataforma hiperlocal optimizada para redes móviles costeras.</p>
+<p><a href="#">Aviso de Privacidad</a> | <a href="#">Términos y Condiciones</a></p>
+</footer>
+
+<script>
+/* ==========================================================================
+1. ESTADO GLOBAL Y DATOS MOCK
+========================================================================== */
+const STATE = {
+role: 'cliente',
+coords: { lat: 18.6444, lng: -95.0975 }, // Coordenadas de Monte Pío / Costa San Andrés
+isSatellite: true,
+audioUnlocked: false,
+cart: { totalComida: 180, distanceKm: 2.5, totalEnvio: 30, grandTotal: 210 },
+activeCode: "8492",
+orderTimer: 20 * 60,
+negocios: [
+{ id: 1, nombre: "Mariscos El Pirata", tag: "Pescados y Mariscos", desc: "Minilla fresca, mojarras fritas y cócteles.", img: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&w=600&q=80" },
+{ id: 2, nombre: "Antojitos Doña Mari", tag: "Comida Típica", desc: "Garnachas, picaditas y empanadas veracruzanas.", img: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=600&q=80" },
+{ id: 3, nombre: "Miscelánea y Palapas La Ceiba", tag: "Víveres e Hidratación", desc: "Hielo, agua de coco fresca, refrescos y abarrotes.", img: "https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80" }
+ ]
+};
+
+let map = null;
+let streetLayer = null;
+let satLayer = null;
+let audioCtx = null;
+let wakeLock = null;
+
+/* ==========================================================================
+2. WEB AUDIO API (Sintetizador sin archivos externos)
+========================================================================== */
+function initAudio() {
+if (!audioCtx) {
+audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+if (audioCtx.state === 'suspended') {
+audioCtx.resume();
+}
+STATE.audioUnlocked = true;
+document.getElementById('btnAudioUnlock').innerText = "🔊 Sonido Activo";
+document.getElementById('btnAudioUnlock').style.background = "#e0e0e0";
+}
+
+document.getElementById('btnAudioUnlock').addEventListener('click', () => {
+initAudio();
+playChime('cliente');
+});
+
+function playChime(tipo) {
+if (!audioCtx) return;
+const now = audioCtx.currentTime;
+const osc = audioCtx.createOscillator();
+const gain = audioCtx.createGain();
+
+osc.connect(gain);
+gain.connect(audioCtx.destination);
+
+if (tipo === 'negocio') {
+// Doble pitido agudo (pedido nuevo en cocina)
+osc.frequency.setValueAtTime(880, now);
+osc.frequency.setValueAtTime(1174, now + 0.15);
+gain.gain.setValueAtTime(0.3, now);
+gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+osc.start(now);
+osc.stop(now + 0.4);
+} else if (tipo === 'repartidor') {
+// Tono ascendente potente
+osc.frequency.setValueAtTime(523.25, now);
+osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.3);
+gain.gain.setValueAtTime(0.4, now);
+gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+osc.start(now);
+osc.stop(now + 0.5);
+} else {
+// Tono suave para cliente
+osc.frequency.setValueAtTime(659.25, now);
+osc.frequency.setValueAtTime(783.99, now + 0.1);
+gain.gain.setValueAtTime(0.2, now);
+gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+osc.start(now);
+osc.stop(now + 0.35);
+}
+}
+
+/* ==========================================================================
+3. INICIALIZACIÓN DEL MAPA (LEAFLET + VISTA SATÉLITE)
+========================================================================== */
+function initMap() {
+if (map) return;
+
+// Satélite ArcGIS de alta resolución (vital para caminos no registrados en la costa)
+satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+maxZoom: 19,
+attribution: 'Esri Satellite'
+});
+
+// Callejero OpenStreetMap
+streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+maxZoom: 19,
+attribution: 'OSM'
+});
+
+map = L.map('map', {
+center: [STATE.coords.lat, STATE.coords.lng],
+zoom: 16,
+layers: [satLayer], // Comienza con vista Satélite
+zoomControl: false
+});
+
+// Listener para obtener el centro cuando el usuario arrastra el mapa
+map.on('moveend', () => {
+const center = map.getCenter();
+STATE.coords.lat = center.lat;
+STATE.coords.lng = center.lng;
+recalcularTarifaEnvio();
+});
+}
+
+function toggleMapLayer() {
+const btn = document.getElementById('btnLayerToggle');
+if (STATE.isSatellite) {
+map.removeLayer(satLayer);
+map.addLayer(streetLayer);
+btn.innerText = "🗺️ Ver Mapa";
+STATE.isSatellite = false;
+} else {
+map.removeLayer(streetLayer);
+map.addLayer(satLayer);
+btn.innerText = "🛰️ Ver Satélite";
+STATE.isSatellite = true;
+}
+}
+
+function locateUser() {
+if ('geolocation' in navigator) {
+navigator.geolocation.getCurrentPosition((pos) => {
+const lat = pos.coords.latitude;
+const lng = pos.coords.longitude;
+STATE.coords = { lat, lng };
+map.setView([lat, lng], 17);
+}, (err) => {
+alert("Por favor permite el GPS para localizar tu casa o selecciona tu punto directamente en el mapa.");
+}, { enableHighAccuracy: true });
+}
+}
+
+function parseLocationLink(link) {
+if (!link) return;
+// Expresión regular para extraer latitud y longitud de links comunes de Google Maps o WhatsApp
+const match = link.match(/@(-?\d+.\d+),(-?\d+.\d+)/) || link.match(/q=(-?\d+.\d+),(-?\d+.\d+)/);
+if (match) {
+const lat = parseFloat(match[1]);
+const lng = parseFloat(match[2]);
+STATE.coords = { lat, lng };
+map.setView([lat, lng], 17);
+alert("¡Ubicación cargada con éxito desde el enlace!");
+}
+}
+
+function recalcularTarifaEnvio() {
+// Cálculo: Base $15 + $6 por km, mínimo $`30
+const km = 2.5; // Distancia estimada euclidiana
+const base = 15;
+const porKm = 6;
+let totalEnvio = base + (km * porKm);
+if (totalEnvio < 30) totalEnvio = 30;
+
+STATE.cart.distanceKm = km;
+STATE.cart.totalEnvio = totalEnvio;
+STATE.cart.grandTotal = STATE.cart.totalComida + totalEnvio;
+
+document.getElementById('costoEnvio').innerText = ``${totalEnvio.toFixed(2)}; document.getElementById('costoTotal').innerText =${STATE.cart.grandTotal.toFixed(2)};
+}
+
+/* ==========================================================================
+4. COMPRESIÓN FOTOGRÁFICA EN EL CLIENTE (<1200px y <300KB)
+========================================================================== */
+function compressImageFile(file, maxWidth = 1200, maxHeight = 1200, quality = 0.82) {
+return new Promise((resolve, reject) => {
+const reader = new FileReader();
+reader.readAsDataURL(file);
+reader.onload = (event) => {
+const img = new Image();
+img.src = event.target.result;
+img.onload = () => {
+let width = img.width;
+let height = img.height;
+
+if (width > height) {
+if (width > maxWidth) {
+height = Math.round((height * maxWidth) / width);
+width = maxWidth;
+}
+} else {
+if (height > maxHeight) {
+width = Math.round((width * maxHeight) / height);
+height = maxHeight;
+}
+}
+
+const canvas = document.createElement('canvas');
+canvas.width = width;
+canvas.height = height;
+const ctx = canvas.getContext('2d');
+ctx.drawImage(img, 0, 0, width, height);
+
+canvas.toBlob((blob) => {
+if (!blob) return reject('Error al procesar la imagen');
+// Si aún pesa > 300KB, recompresión con menor calidad
+if (blob.size > 300 * 1024) {
+canvas.toBlob((blobFinal) => resolve(blobFinal), 'image/jpeg', 0.65);
+} else {
+resolve(blob);
+}
+}, 'image/jpeg', quality);
+};
+};
+});
+}
+
+async function handleImageUpload(e, previewId) {
+const file = e.target.files[0];
+if (!file) return;
+const compressedBlob = await compressImageFile(file);
+const imgUrl = URL.createObjectURL(compressedBlob);
+const preview = document.getElementById(previewId);
+preview.src = imgUrl;
+preview.style.display = 'block';
+}
+
+async function handleProductImage(e) {
+const file = e.target.files[0];
+if (!file) return;
+const compressedBlob = await compressImageFile(file);
+const sizeKB = (compressedBlob.size / 1024).toFixed(1);
+document.getElementById('fotoStatus').innerText = ✓ Foto optimizada para datos lentos:${sizeKB} KB`;
+}
+
+/* ==========================================================================
+5. CAPTURA DE SELFIE FACIAL EXCLUSIVA CON CÁMARA FRONTAL
+========================================================================== */
+let selfieStream = null;
+
+async function abrirCamaraSelfie() {
+const modal = document.getElementById('selfieModal');
+const video = document.getElementById('selfieVideo');
+modal.style.display = 'flex';
+
+try {
+selfieStream = await navigator.mediaDevices.getUserMedia({
+video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+audio: false
+});
+video.srcObject = selfieStream;
+} catch (err) {
+alert("No se pudo acceder a la cámara frontal para la selfie en vivo: " + err.message);
+modal.style.display = 'none';
+}
+}
+
+function capturarFotoSelfie() {
+const video = document.getElementById('selfieVideo');
+const canvas = document.getElementById('selfieCanvas');
+canvas.width = video.videoWidth;
+canvas.height = video.videoHeight;
+const ctx = canvas.getContext('2d');
+ctx.drawImage(video, 0, 0);
+
+cerrarCamaraSelfie();
+document.getElementById('selfieBadge').innerHTML = '<span class="badge badge-success">✓ Selfie facial capturada y lista para revisión</span>';
+alert("Selfie capturada con éxito. Pasará a aprobación del Administrador.");
+}
+
+function cerrarCamaraSelfie() {
+if (selfieStream) {
+selfieStream.getTracks().forEach(track => track.stop());
+}
+document.getElementById('selfieModal').style.display = 'none';
+}
+
+/* ==========================================================================
+6. WAKE LOCK API (Pantalla activa en cocina)
+========================================================================== */
+async function solicitarWakeLock() {
+if ('wakeLock' in navigator) {
+try {
+wakeLock = await navigator.wakeLock.request('screen');
+alert("💡 La pantalla permanecerá encendida para monitorear órdenes continuamente.");
+} catch (err) {
+console.error(err);
+}
+} else {
+alert("La función de pantalla activa no está soportada en este navegador.");
+}
+}
+
+/* ==========================================================================
+7. FLUJOS DE OPERACIÓN, CÓDIGOS E INCIDENTES
+========================================================================== */
+function renderNegocios() {
+const container = document.getElementById('negociosContainer');
+container.innerHTML = STATE.negocios.map(n => &lt;article class="biz-card"&gt; &lt;img src="${n.img}" alt="${n.nombre}" loading="lazy"&gt; &lt;div class="biz-card-content"&gt; &lt;span class="biz-tag"&gt;${n.tag}</span>
+<h3 class="biz-title">${n.nombre}&lt;/h3&gt; &lt;p style="font-size: 0.85rem; color: #555; margin-bottom: 12px; flex-grow: 1;"&gt;${n.desc}</p>
+<button class="btn-primary" onclick="abrirCheckout(${n.id})"&gt;Ver Menú y Pedir&lt;/button&gt; &lt;/div&gt; &lt;/article&gt;).join('');
+}
+
+function abrirCheckout(id) {
+document.getElementById('checkoutModal').style.display = 'block';
+setTimeout(() => {
+initMap();
+map.invalidateSize(); // Previene errores de tamaño en Leaflet dentro de modales
+}, 200);
+}
+
+function cerrarCheckout() {
+document.getElementById('checkoutModal').style.display = 'none';
+}
+
+function realizarPedido() {
+const ref = document.getElementById('inputReferencias').value.trim();
+const tel = document.getElementById('inputTelefonoCliente').value.trim();
+
+if (!ref || !tel) {
+alert("Por favor completa las Referencias de tu casa y tu número de Teléfono.");
+return;
+}
+
+cerrarCheckout();
+document.getElementById('modalTracking').style.display = 'block';
+playChime('cliente');
+alert("¡Pedido enviado a la cocina! Tu repartidor te entregará el código para que lo introduzcas en tu pantalla.");
+iniciarTemporizadorAutoConfirmacion();
+}
+
+function validarCodigoEntrega() {
+const codigoInput = document.getElementById('inputClientCode').value.trim();
+if (codigoInput === STATE.activeCode) {
+playChime('cliente');
+document.getElementById('lblEstadoPedido').className = "badge badge-success";
+document.getElementById('lblEstadoPedido').innerText = "Entregado y Confirmado";
+alert("🎉 ¡Código verificado correctamente! Pedido finalizado con éxito.");
+} else {
+alert("Código incorrecto. Pídele al repartidor el código de 4 dígitos que aparece en su pantalla.");
+}
+}
+
+function reportarIncidente(rol) {
+const razon = prompt("Describe el problema ocurrido con el pedido:");
+if (razon) {
+alert("Reporte registrado. El Administrador ha sido notificado para resolverlo.");
+}
+}
+
+function reportarNoRecibido() {
+const confirmacion = confirm("¿El cliente no se encuentra en el domicilio marcado?");
+if (confirmacion) {
+alert("Registrando foto de fachada y coordenadas GPS como evidencia. Esperando 10 minutos de gracia.");
+}
+}
+
+function botonEmergencia() {
+if (confirm("¿Deseas llamar inmediatamente a la central de emergencia 911 de la zona de San Andrés Tuxtla?")) {
+window.location.href = "tel:911";
+}
+}
+
+function iniciarTemporizadorAutoConfirmacion() {
+const timerElement = document.getElementById('autoConfirmTimer');
+const interval = setInterval(() => {
+STATE.orderTimer--;
+const mins = Math.floor(STATE.orderTimer / 60);
+const secs = STATE.orderTimer % 60;
+timerElement.innerText = ${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')};
+if (STATE.orderTimer <= 0) {
+clearInterval(interval);
+document.getElementById('lblEstadoPedido').innerText = "Confirmado automáticamente";
+}
+}, 1000);
+}
+
+function switchRole(newRole) {
+STATE.role = newRole;
+document.querySelectorAll('.role-pill').forEach(btn => btn.classList.remove('active'));
+event.target.classList.add('active');
+
+document.querySelectorAll('.screen').forEach(scr => scr.classList.remove('active'));
+if (newRole === 'cliente') document.getElementById('screenCliente').classList.add('active');
+if (newRole === 'repartidor') document.getElementById('screenRepartidor').classList.add('active');
+if (newRole === 'negocio') document.getElementById('screenNegocio').classList.add('active');
+if (newRole === 'admin') document.getElementById('screenAdmin').classList.add('active');
+}
+
+function updateVehicleRestrictions() {
+const vehiculo = document.getElementById('driverVehicle').value;
+const biciDetails = document.getElementById('biciDetails');
+biciDetails.style.display = vehiculo === 'bici' ? 'block' : 'none';
+}
+
+function guardarProducto() {
+const chk = document.getElementById('chkDerechos').checked;
+const nombre = document.getElementById('prodNombre').value;
+if (!chk) {
+alert("Debes confirmar la casilla de propiedad o autorización de las fotos.");
+return;
+}
+if (!nombre) {
+alert("Escribe el nombre del platillo.");
+return;
+}
+alert(Producto "${nombre}" enviado a revisión del Administrador.`);
+}
+
+function recargarSaldo() {
+const monto = prompt("Monto a recargar a tu cartera de repartidor ($):", "200"); if (monto) { document.getElementById('saldoRepartidor').innerText =$${(120 + parseFloat(monto)).toFixed(2)} MXN`;
+alert("Recarga aplicada con éxito.");
+}
+}
+
+/* ==========================================================================
+8. REGISTRO DEL SERVICE WORKER Y MONITOREO DE RED
+========================================================================== */
+window.addEventListener('load', () => {
+renderNegocios();
+
+if ('serviceWorker' in navigator) {
+navigator.serviceWorker.register('./sw.js').then((reg) => {
+console.log('Costera App SW registrado correctamente:', reg.scope);
+}).catch((err) => {
+console.log('Fallo al registrar SW:', err);
+});
+}
+
+function updateOnlineStatus() {
+const badge = document.getElementById('networkStatus');
+if (navigator.onLine) {
+badge.className = "badge badge-success";
+badge.innerText = "Online";
+} else {
+badge.className = "badge badge-danger";
+badge.innerText = "Modo Sin Señal";
+}
+}
+
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+});
+</script>
+</body>
+</html>
